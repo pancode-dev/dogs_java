@@ -1,8 +1,6 @@
 package com.pancodedev.razasdeperros.feature_doglist.view;
 
 import android.os.Build;
-import android.os.Handler;
-import android.os.Looper;
 
 import androidx.annotation.RequiresApi;
 import androidx.lifecycle.LiveData;
@@ -11,68 +9,47 @@ import androidx.lifecycle.ViewModel;
 
 import com.pancodedev.razasdeperros.feature_doglist.model.DogRepository;
 import com.pancodedev.razasdeperros.feature_doglist.model.data.Dog;
+import com.pancodedev.razasdeperros.feature_doglist.model.use_case.GetDogListUseCase;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
 import javax.inject.Inject;
 
-import dagger.hilt.android.AndroidEntryPoint;
 import dagger.hilt.android.lifecycle.HiltViewModel;
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 
 @HiltViewModel
 public class MainViewModel extends ViewModel {
-    private MutableLiveData<List<Dog>> dogList = new MutableLiveData<>();
-    private MutableLiveData<Exception> fetchException = new MutableLiveData<>();
-    private DogRepository repository;
+    private final MutableLiveData<List<Dog>> dogListObservable = new MutableLiveData<>();
+    private final MutableLiveData<Exception> exceptionObservable = new MutableLiveData<>();
+    private final GetDogListUseCase getDogListUseCase;
 
     public LiveData<List<Dog>> onDogListUpdated() {
-        return dogList;
+        return dogListObservable;
     }
 
     public LiveData<Exception> onExceptionUpdated() {
-        return fetchException;
+        return exceptionObservable;
     }
 
     @Inject
-    public MainViewModel(DogRepository repository){
-        this.repository = repository;
+    public MainViewModel(GetDogListUseCase getDogListUseCase) {
+        this.getDogListUseCase = getDogListUseCase;
     }
 
     @RequiresApi(api = Build.VERSION_CODES.N)
-    public void loadBreedList() {
-
-        new Thread(() -> {
-
-            Handler mainThread = new Handler(Looper.getMainLooper());
-
-            try{
-                List<String> fetchedList = repository.fetchBreedListFromServer().getBreedList().subList(0,4);
-
-
-
-                List<Dog> dogListWithImage = fetchedList.stream().map(breed -> {
-                    try {
-                        return new Dog(breed, loadRandomImage(breed));
-                    } catch (Exception e) {
-                        return new Dog(breed, null);
-                    }
-                }).collect(Collectors.toList());
-
-                mainThread.post(() -> {
-                    dogList.setValue(dogListWithImage);
+    public void getDogList() {
+        Flowable.fromCallable(() -> getDogListUseCase.getDogList())
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(dogList -> {
+                    dogListObservable.setValue(dogList);
+                }, throwable -> {
+                    exceptionObservable.setValue((Exception) throwable);
                 });
-            } catch (Exception e) {
-                mainThread.post(() -> {
-                    fetchException.setValue(e);
-                });
-            }
-        }).start();
     }
 
-
-    private String loadRandomImage(String breed) throws Exception {
-
-        return repository.fetchRandomImageFromServer(breed).getImageLink();
-    }
 }

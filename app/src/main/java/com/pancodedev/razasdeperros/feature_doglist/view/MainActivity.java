@@ -10,12 +10,14 @@ import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 
+import com.google.android.material.snackbar.Snackbar;
 import com.pancodedev.razasdeperros.R;
 import com.pancodedev.razasdeperros.databinding.ActivityMainBinding;
 import com.pancodedev.razasdeperros.feature_doglist.model.data.Dog;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import javax.inject.Inject;
 
@@ -37,7 +39,6 @@ public class MainActivity extends AppCompatActivity {
 
         DogListAdapter adapter = new DogListAdapter(new ArrayList<>());
         binding.recyclerviewDogListContainer.setAdapter(adapter);
-        binding.recyclerviewDogListContainer.setLayoutManager(new GridLayoutManager(this, 2));
 
         viewModel = new ViewModelProvider(this).get(MainViewModel.class);
 
@@ -49,10 +50,10 @@ public class MainActivity extends AppCompatActivity {
         });
 
         viewModel.onExceptionUpdated().observe(this, exception -> {
-            Log.d(tag, "ERROR - " + exception.getMessage());
+            Snackbar.make(binding.getRoot(), Objects.requireNonNull(exception.getMessage()), Snackbar.LENGTH_LONG).show();
         });
 
-        viewModel.loadBreedList();
+        viewModel.getDogList();
 
 
     }
