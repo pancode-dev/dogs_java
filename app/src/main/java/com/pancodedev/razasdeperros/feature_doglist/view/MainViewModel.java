@@ -23,33 +23,9 @@ import io.reactivex.rxjava3.schedulers.Schedulers;
 
 @HiltViewModel
 public class MainViewModel extends ViewModel {
-    private final MutableLiveData<List<Dog>> dogListObservable = new MutableLiveData<>();
-    private final MutableLiveData<Exception> exceptionObservable = new MutableLiveData<>();
-    private final GetDogListUseCase getDogListUseCase;
-
-    public LiveData<List<Dog>> onDogListUpdated() {
-        return dogListObservable;
-    }
-
-    public LiveData<Exception> onExceptionUpdated() {
-        return exceptionObservable;
-    }
 
     @Inject
-    public MainViewModel(GetDogListUseCase getDogListUseCase) {
-        this.getDogListUseCase = getDogListUseCase;
-    }
-
-    @RequiresApi(api = Build.VERSION_CODES.N)
-    public void getDogList() {
-        Flowable.fromCallable(() -> getDogListUseCase.getDogList())
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(dogList -> {
-                    dogListObservable.setValue(dogList);
-                }, throwable -> {
-                    exceptionObservable.setValue((Exception) throwable);
-                });
+    public MainViewModel() {
     }
 
 }

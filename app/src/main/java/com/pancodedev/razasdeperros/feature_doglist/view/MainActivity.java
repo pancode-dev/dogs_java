@@ -3,6 +3,8 @@ package com.pancodedev.razasdeperros.feature_doglist.view;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.NavController;
+import androidx.navigation.fragment.NavHostFragment;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -25,9 +27,9 @@ import dagger.hilt.android.AndroidEntryPoint;
 
 @AndroidEntryPoint
 public class MainActivity extends AppCompatActivity {
-    private String tag = this.getClass().getSimpleName();
     private MainViewModel viewModel;
     private ActivityMainBinding binding;
+    private NavController navController;
 
     @RequiresApi(api = Build.VERSION_CODES.N)
     @Override
@@ -37,24 +39,11 @@ public class MainActivity extends AppCompatActivity {
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-        DogListAdapter adapter = new DogListAdapter(new ArrayList<>());
-        binding.recyclerviewDogListContainer.setAdapter(adapter);
+        NavHostFragment navHostFragment =
+                (NavHostFragment) getSupportFragmentManager()
+                .findFragmentById(R.id.nav_host_fragment);
 
-        viewModel = new ViewModelProvider(this).get(MainViewModel.class);
-
-        viewModel.onDogListUpdated().observe(this, dogList -> {
-            for(Dog dog : dogList) {
-                Log.d(tag, dog.getBreed() + " - " + dog.getImage());
-            }
-            adapter.updateDataSet(dogList);
-        });
-
-        viewModel.onExceptionUpdated().observe(this, exception -> {
-            Snackbar.make(binding.getRoot(), Objects.requireNonNull(exception.getMessage()), Snackbar.LENGTH_LONG).show();
-        });
-
-        viewModel.getDogList();
-
-
+        assert navHostFragment != null;
+        navController = navHostFragment.getNavController();
     }
 }
